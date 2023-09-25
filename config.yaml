@@ -1,0 +1,39 @@
+---
+- hosts: all
+  become: true
+  vars_files:
+    - motd.yaml
+  tasks:
+  - name: Read MOTD text from motd.yaml
+    slurp:
+      src: /etc/motd
+    register: config_file_content
+  
+  - name: Set MOTD with the configured default text
+    template:
+      src: motd.j2
+      dest: /etc/motd
+    vars:
+      motd_text: "{{ config_file_content['content'] | b64decode }}"
+
+  - name: install python3 and pip3
+    package:
+      name:
+#python_package and pip_package declared in inventory file
+        - "{{ python_package }}"
+        - "{{ pip_package }}"
+      state: latest
+      update_cache: yes
+
+  - name: use python3 as default
+    command: echo "alias python=/usr/local/bin/python3" >> ~/.bashrc
+  - name: use pip3 as default
+    command: echo "alias pip=/usr/local/bin/pip3" >> ~/.bashrc
+
+  - name: install java open-jdk
+    package:
+      name:
+#java_package declaration is in inventory file
+        - "{{ java_package }}"
+      state: latest
+      update_cache: yes
